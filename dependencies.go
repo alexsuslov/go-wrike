@@ -20,15 +20,37 @@
 
 package wrike
 
-import "github.com/alexsuslov/godotenv"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+)
 
-var _env = []string{
-	"WRIKE_API_TOKEN",
-	"WRIKE_BASE_URL",
+const (
+	taskDependenciesPath = "/tasks/%v/dependencies"
+)
+
+func getTaskDependencies(path string) func(ctx context.Context, id string, response ResponseDependence) error {
+	return func(ctx context.Context, id string, response ResponseDependence) error {
+		URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(taskDependenciesPath, id)
+		body, _, err := Request(ctx, "GET", URL, nil, nil)
+		if err != nil {
+			return err
+		}
+		defer body.Close()
+		return json.NewDecoder(body).Decode(response)
+	}
 }
 
-func checkEnv() {
-	for _, v := range _env {
-		godotenv.GetPanic(v)
-	}
+type ResponseDependence struct {
+	Kind string       `json:"kind"`
+	Data []Dependence `json:"data"`
+}
+
+type Dependence struct {
+	ID            string `json:"id"`
+	PredecessorID string `json:"predecessorId"`
+	SuccessorID   string `json:"successorId"`
+	RelationType  string `json:"relationType"`
 }

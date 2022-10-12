@@ -1,51 +1,74 @@
 package wrike
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"time"
 )
 
-// TimelogService is Timelog endpoint, see https://developers.wrike.com/documentation/api/methods/query-timelogs
-type TimelogService struct {
-	client *Client
+const (
+	timelogsPath         = "/timelogs"
+	timelogPath          = "/timelogs/%s"
+	contactTimelogsPath  = "/contacts/%s/timelogs"
+	folderTimelogsPath   = "/folders/%s/timelogs"
+	taskTimelogsPath     = "/tasks/%s/timelogs"
+	categoryTimelogsPath = "/timelog_categories/%s/timelogs"
+)
+
+//https://developers.wrike.com/api/v4/timelogs/
+
+func GetTimeLogs(ctx context.Context, response ResponseTimeLogs) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + timelogsPath
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-// Timelog represents a timelog
-type Timelog struct {
-	ID          string  `json:"id"`
-	TaskID      string  `json:"taskId"`
-	UserID      string  `json:"userId"`
-	CategoryID  string  `json:"categoryId"`
-	Hours       float64 `json:"hours"`
-	CreatedDate string  `json:"createdDate"`
-	UpdatedDate string  `json:"updatedDate"`
-	TrackedDate string  `json:"trackedDate"`
-	Comment     string  `json:"comment"`
-}
-
-// Timelogs represents /timelogs reponse
-type Timelogs struct {
+type ResponseTimeLogs struct {
 	Kind string    `json:"kind"`
-	Data []Timelog `json:"data,omitempty"`
+	Data []TimeLog `json:"data"`
 }
 
-// TimelogsParams represents params passed to query timelogs
-type TimelogsParams struct {
+type TimeLog struct {
+	ID          string    `json:"id"`
+	TaskID      string    `json:"taskId"`
+	UserID      string    `json:"userId"`
+	CategoryID  string    `json:"categoryId,omitempty"`
+	Hours       int       `json:"hours"`
+	CreatedDate time.Time `json:"createdDate"`
+	UpdatedDate time.Time `json:"updatedDate"`
+	TrackedDate string    `json:"trackedDate"`
+	Comment     string    `json:"comment"`
 }
 
-// GetTimelogs get folder timelogs
-func (s *TimelogService) GetTimelogs(id string) (*Timelogs, *Response, error) {
-	u := fmt.Sprintf("folders/%s/timelogs", id)
-	fmt.Println(u)
-	req, err := s.client.NewRequest("GET", u, TimelogsParams{})
-	if err != nil {
-		return nil, nil, err
+func getTimeLogs(path string) func(ctx context.Context, id string, response ResponseTimeLogs) error {
+	return func(ctx context.Context, id string, response ResponseTimeLogs) error {
+		URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(contactTimelogsPath, id)
+		body, _, err := Request(ctx, "GET", URL, nil, nil)
+		if err != nil {
+			return err
+		}
+		defer body.Close()
+		return json.NewDecoder(body).Decode(response)
 	}
-
-	timelogs := new(Timelogs)
-	resp, err := s.client.Do(req, timelogs)
-
-	if err != nil {
-		return nil, resp, err
-	}
-	return timelogs, resp, err
 }
+
+// GetContactTimeLogs Get all timelog records that were created by the user.
+var GetContactTimeLogs = getTimeLogs(contactTimelogsPath)
+
+// GetFolderTimeLogs Get all timelog records for a folder.
+var GetFolderTimeLogs = getTimeLogs(folderTimelogsPath)
+
+// GetTaskTimeLogs Get all timelog records for a task.
+var GetTaskTimeLogs = getTimeLogs(taskTimelogsPath)
+
+// GetCategoryTimeLogs GetCategoryTimeLogs Get all timelog records with specific timelog category.
+var GetCategoryTimeLogs = getTimeLogs(categoryTimelogsPath)
+
+// GetTimeLog Get timelog record by IDs.
+var GetTimeLog = getTimeLogs(timelogPath)

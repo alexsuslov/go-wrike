@@ -20,15 +20,53 @@
 
 package wrike
 
-import "github.com/alexsuslov/godotenv"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"os"
+)
 
-var _env = []string{
-	"WRIKE_API_TOKEN",
-	"WRIKE_BASE_URL",
+const (
+	jobrolesPath = "/jobroles"
+	jobrolePath  = "/jobroles/%s"
+)
+
+func GetJobRoles(ctx context.Context, values url.Values, response *ResponseJobRoles) (err error) {
+	u, err := url.Parse(os.Getenv("WRIKE_BASE_URL") + jobrolesPath)
+	if err != nil {
+		return
+	}
+	u.RawQuery = values.Encode()
+	body, _, err := Request(ctx, "GET", u.String(), nil, nil)
+	if err != nil {
+		return
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-func checkEnv() {
-	for _, v := range _env {
-		godotenv.GetPanic(v)
+func GetJobRole(ctx context.Context, id string, response ResponseJobRoles) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(jobrolePath, id)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
 	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
+
+}
+
+type ResponseJobRoles struct {
+	Kind string    `json:"kind"`
+	Data []JobRole `json:"data"`
+}
+
+type JobRole struct {
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	ShortTitle string `json:"shortTitle"`
+	AvatarURL  string `json:"avatarUrl"`
+	IsDeleted  bool   `json:"isDeleted"`
 }

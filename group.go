@@ -20,15 +20,49 @@
 
 package wrike
 
-import "github.com/alexsuslov/godotenv"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+)
 
-var _env = []string{
-	"WRIKE_API_TOKEN",
-	"WRIKE_BASE_URL",
+const (
+	groupsPath = "/groups"
+	groupPath  = "/groups/%s"
+)
+
+func GetGroups(ctx context.Context, response *ResponseGroups) (err error) {
+	URL := os.Getenv("WRIKE_BASE_URL") + groupsPath
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-func checkEnv() {
-	for _, v := range _env {
-		godotenv.GetPanic(v)
+func GetGroup(ctx context.Context, groupID string, response *ResponseGroups) (err error) {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(groupPath, groupID)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return
 	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
+}
+
+type ResponseGroups struct {
+	Kind string  `json:"kind"`
+	Data []Group `json:"data"`
+}
+
+type Group struct {
+	ID        string   `json:"id"`
+	AccountID string   `json:"accountId"`
+	Title     string   `json:"title"`
+	MemberIds []string `json:"memberIds"`
+	ChildIds  []string `json:"childIds"`
+	ParentIds []string `json:"parentIds"`
+	AvatarURL string   `json:"avatarUrl"`
 }

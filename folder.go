@@ -1,74 +1,90 @@
+// (c) 2022 Alex Suslov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+// of the Software, and to permit persons to whom the Software is furnished to do
+// so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 package wrike
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 )
 
-// FolderService endpoint, see Wrike API docs: https://developers.wrike.com/documentation/api/methods/get-folder-tree
-type FolderService struct {
-	client *Client
+const (
+	foldersPath      = "/folders"
+	folderPath       = "/folders/%s"
+	subFoldersPath   = "/folders/%s/folders"
+	spaceFoldersPath = "/folders/%s/folders"
+)
+
+func GetFolders(ctx context.Context, response *ResponseFolders) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + foldersPath
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-// Metadata struct
-type Metadata struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+// GetFolder by id //https://developers.wrike.com/api/v4/folders-projects/#get-folder
+func GetFolder(ctx context.Context, folderId string, response *ResponseFolders) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(folderPath, folderId)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-// CustomField struct
-type CustomField struct {
-	ID    string `json:"id"`
-	Value string `json:"value"`
+func GetSubFolders(ctx context.Context, folderId string, response *ResponseFolders) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(subFoldersPath, folderId)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-// Project struct
-type Project struct {
-	AuthorID      string   `json:"authorId"`
-	OwnerIds      []string `json:"ownerIds"`
-	Status        string   `json:"status"`
-	StartDate     string   `json:"startDate"`
-	EndDate       string   `json:"endDate"`
-	CreatedDate   string   `json:"createdDate"`
-	CompletedDate string   `json:"completedDate"`
+func GetSpaceFolders(ctx context.Context, spaceId string, response *ResponseFolders) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(spaceFoldersPath, spaceId)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-// Folder struct, also known as Project
+type ResponseFolders struct {
+	Kind string   `json:"kind"`
+	Data []Folder `json:"data"`
+}
+
 type Folder struct {
-	Kind string `json:"kind"`
-	Data []struct {
-		ID             string        `json:"id"`
-		AccountID      string        `json:"accountId"`
-		Title          string        `json:"title"`
-		CreatedDate    string        `json:"createdAt"`
-		UpdatedDate    string        `json:"updatedAt"`
-		Description    string        `json:"description"`
-		SharedIds      []string      `json:"sharedIds,omitempty"`
-		ParentIds      []string      `json:"parentIds,omitempty"`
-		ChildIds       []string      `json:"childIds,omitempty"`
-		SuperParentIds []string      `json:"superParentIds,omitempty"`
-		Scope          string        `json:"scope"`
-		HasAttachments bool          `json:"hasAttachments"`
-		Permalink      string        `json:"permalink"`
-		WorkflowID     string        `json:"workflowId"`
-		Metadata       []Metadata    `json:"metadata,omitempty"`
-		CustomFields   []CustomField `json:"customFields"`
-		Project        Project       `json:"project"`
-	} `json:"data,omitempty"`
-}
-
-// GetFolder from id, see Wrike API: https://developers.wrike.com/documentation/api/methods/get-folder
-func (s *FolderService) GetFolder(id string) (*Folder, *Response, error) {
-	u := fmt.Sprintf("folders/%s", id)
-	req, err := s.client.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	f := new(Folder)
-	resp, err := s.client.Do(req, f)
-
-	if err != nil {
-		return nil, resp, err
-	}
-	return f, resp, err
+	ID       string   `json:"id"`
+	Title    string   `json:"title"`
+	Children []string `json:"children"`
+	ChildIds []string `json:"childIds"`
+	Scope    string   `json:"scope"`
+	Project  Project  `json:"project,omitempty"`
 }

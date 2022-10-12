@@ -20,15 +20,48 @@
 
 package wrike
 
-import "github.com/alexsuslov/godotenv"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+)
 
-var _env = []string{
-	"WRIKE_API_TOKEN",
-	"WRIKE_BASE_URL",
+const userPath = "/users/%s"
+
+type ResponseUsers struct {
+	Kind string `json:"kind"`
+	Data []User `json:"data"`
 }
 
-func checkEnv() {
-	for _, v := range _env {
-		godotenv.GetPanic(v)
+type User struct {
+	ID        string    `json:"id"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Type      string    `json:"type"`
+	Profiles  []Profile `json:"profiles"`
+	AvatarURL string    `json:"avatarUrl"`
+	Timezone  string    `json:"timezone"`
+	Locale    string    `json:"locale"`
+	Deleted   bool      `json:"deleted"`
+	Me        bool      `json:"me"`
+	Phone     string    `json:"phone"`
+}
+type Profile struct {
+	AccountID string `json:"accountId"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	External  bool   `json:"external"`
+	Admin     bool   `json:"admin"`
+	Owner     bool   `json:"owner"`
+}
+
+func GetUser(ctx context.Context, userId string, response *ResponseTasks) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(userPath, userId)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
 	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }

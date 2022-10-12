@@ -20,15 +20,34 @@
 
 package wrike
 
-import "github.com/alexsuslov/godotenv"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+)
 
-var _env = []string{
-	"WRIKE_API_TOKEN",
-	"WRIKE_BASE_URL",
+const (
+	contactsPath = "/contacts"
+	contactPath  = "/contacts/%s"
+)
+
+func GetContacts(ctx context.Context, response *ResponseUsers) (err error) {
+	URL := os.Getenv("WRIKE_BASE_URL") + contactsPath
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-func checkEnv() {
-	for _, v := range _env {
-		godotenv.GetPanic(v)
+func GetContact(ctx context.Context, contactID string, response *ResponseUsers) (err error) {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(contactPath, contactID)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return
 	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }

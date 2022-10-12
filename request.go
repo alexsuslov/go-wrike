@@ -20,15 +20,50 @@
 
 package wrike
 
-import "github.com/alexsuslov/godotenv"
+import (
+	"context"
+	"crypto/tls"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+)
 
-var _env = []string{
-	"WRIKE_API_TOKEN",
-	"WRIKE_BASE_URL",
-}
+// Request Request
+func Request(ctx context.Context, method string, url string, reader io.ReadCloser,
+	head map[string]string) (body io.ReadCloser, header http.Header, err error) {
 
-func checkEnv() {
-	for _, v := range _env {
-		godotenv.GetPanic(v)
+	InsecureSkipVerify := os.Getenv("InsecureSkipVerify") == "YES"
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: InsecureSkipVerify},
 	}
+	req, err := http.NewRequestWithContext(ctx, method, url, reader)
+	if err != nil {
+		return
+	}
+	req.Header.Add("Authorization", "bearer "+os.Getenv("WRIKE_API_TOKEN"))
+	if head == nil {
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	} else {
+		for k, v := range head {
+			req.Header.Set(k, v)
+		}
+	}
+
+	client := &http.Client{Transport: tr}
+	r, err := client.Do(req)
+	if err != nil {
+		err = fmt.Errorf("client.Do:%v", err)
+		return
+	}
+
+	if r.StatusCode < 200 || r.StatusCode >= 300 {
+		data := []byte("")
+		if r.Body != nil {
+			data, _ = io.ReadAll(r.Body)
+		}
+		err = fmt.Errorf("%v:%v", r.StatusCode, string(data))
+		return
+	}
+	return r.Body, r.Header, err
 }

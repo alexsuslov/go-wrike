@@ -20,15 +20,43 @@
 
 package wrike
 
-import "github.com/alexsuslov/godotenv"
+import (
+	"context"
+	"encoding/json"
+	"os"
+)
 
-var _env = []string{
-	"WRIKE_API_TOKEN",
-	"WRIKE_BASE_URL",
+const (
+	workflowsPath = "/workflows"
+)
+
+func GetWorkflows(ctx context.Context, response *ResponseWorkflows) (err error) {
+	URL := os.Getenv("WRIKE_BASE_URL") + workflowsPath
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
 }
 
-func checkEnv() {
-	for _, v := range _env {
-		godotenv.GetPanic(v)
-	}
+type ResponseWorkflows struct {
+	Kind string     `json:"kind"`
+	Data []Workflow `json:"data"`
+}
+
+type Workflow struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Standard       bool   `json:"standard"`
+	Hidden         bool   `json:"hidden"`
+	CustomStatuses []struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		StandardName bool   `json:"standardName"`
+		Color        string `json:"color"`
+		Standard     bool   `json:"standard"`
+		Group        string `json:"group"`
+		Hidden       bool   `json:"hidden"`
+	} `json:"customStatuses"`
 }
