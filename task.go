@@ -118,7 +118,7 @@ type Task struct {
 	SubTaskIds       []string      `json:"subTaskIds"`
 	DependencyIds    []string      `json:"dependencyIds"`
 	Metadata         Metadatas     `json:"metadata"`
-	CustomFields     []Fields      `json:"customFields"`
+	CustomFields     Fields        `json:"customFields"`
 }
 
 type Project struct {
