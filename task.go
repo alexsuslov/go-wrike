@@ -54,8 +54,8 @@ func GetTasks(ctx context.Context, values url.Values, response *ResponseTasks) (
 	return json.NewDecoder(body).Decode(response)
 }
 
-func getTasks(path string) func(ctx context.Context, id string, response ResponseTimeLogs) error {
-	return func(ctx context.Context, id string, response ResponseTimeLogs) error {
+func getTasks(path string) func(ctx context.Context, id string, response *ResponseTasks) error {
+	return func(ctx context.Context, id string, response *ResponseTasks) error {
 		URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(path, id)
 		body, _, err := Request(ctx, "GET", URL, nil, nil)
 		if err != nil {

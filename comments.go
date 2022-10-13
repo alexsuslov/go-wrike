@@ -51,8 +51,8 @@ func GetComments(ctx context.Context, response *ResponseComments) (err error) {
 
 }
 
-func getComments(path string) func(ctx context.Context, id string, response ResponseComments) error {
-	return func(ctx context.Context, id string, response ResponseComments) error {
+func getComments(path string) func(ctx context.Context, id string, response *ResponseComments) error {
+	return func(ctx context.Context, id string, response *ResponseComments) error {
 		URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(path, id)
 		body, _, err := Request(ctx, "GET", URL, nil, nil)
 		if err != nil {

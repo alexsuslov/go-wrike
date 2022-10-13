@@ -19,7 +19,7 @@ const (
 
 //https://developers.wrike.com/api/v4/timelogs/
 
-func GetTimeLogs(ctx context.Context, response ResponseTimeLogs) error {
+func GetTimeLogs(ctx context.Context, response *ResponseTimeLogs) error {
 	URL := os.Getenv("WRIKE_BASE_URL") + timelogsPath
 	body, _, err := Request(ctx, "GET", URL, nil, nil)
 	if err != nil {
@@ -46,8 +46,8 @@ type TimeLog struct {
 	Comment     string    `json:"comment"`
 }
 
-func getTimeLogs(path string) func(ctx context.Context, id string, response ResponseTimeLogs) error {
-	return func(ctx context.Context, id string, response ResponseTimeLogs) error {
+func getTimeLogs(path string) func(ctx context.Context, id string, response *ResponseTimeLogs) error {
+	return func(ctx context.Context, id string, response *ResponseTimeLogs) error {
 		URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(contactTimelogsPath, id)
 		body, _, err := Request(ctx, "GET", URL, nil, nil)
 		if err != nil {

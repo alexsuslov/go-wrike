@@ -47,7 +47,7 @@ func GetJobRoles(ctx context.Context, values url.Values, response *ResponseJobRo
 	return json.NewDecoder(body).Decode(response)
 }
 
-func GetJobRole(ctx context.Context, id string, response ResponseJobRoles) error {
+func GetJobRole(ctx context.Context, id string, response *ResponseJobRoles) error {
 	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(jobrolePath, id)
 	body, _, err := Request(ctx, "GET", URL, nil, nil)
 	if err != nil {

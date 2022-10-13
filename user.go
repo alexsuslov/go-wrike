@@ -29,6 +29,16 @@ import (
 
 const userPath = "/users/%s"
 
+func GetUser(ctx context.Context, userId string, response *ResponseUsers) error {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(userPath, userId)
+	body, _, err := Request(ctx, "GET", URL, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(response)
+}
+
 type ResponseUsers struct {
 	Kind string `json:"kind"`
 	Data []User `json:"data"`
@@ -54,14 +64,4 @@ type Profile struct {
 	External  bool   `json:"external"`
 	Admin     bool   `json:"admin"`
 	Owner     bool   `json:"owner"`
-}
-
-func GetUser(ctx context.Context, userId string, response *ResponseTasks) error {
-	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(userPath, userId)
-	body, _, err := Request(ctx, "GET", URL, nil, nil)
-	if err != nil {
-		return err
-	}
-	defer body.Close()
-	return json.NewDecoder(body).Decode(response)
 }

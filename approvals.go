@@ -50,8 +50,8 @@ func GetApprovals(ctx context.Context, values url.Values, response *ResponseAppr
 	return json.NewDecoder(body).Decode(response)
 }
 
-func getApprovals(path string) func(ctx context.Context, id string, response ResponseApprovals) error {
-	return func(ctx context.Context, id string, response ResponseApprovals) error {
+func getApprovals(path string) func(ctx context.Context, id string, response *ResponseApprovals) error {
+	return func(ctx context.Context, id string, response *ResponseApprovals) error {
 		URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(path, id)
 		body, _, err := Request(ctx, "GET", URL, nil, nil)
 		if err != nil {

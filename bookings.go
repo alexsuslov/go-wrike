@@ -33,7 +33,7 @@ const (
 	foldersBookingPath = "/folders/%s/bookings"
 )
 
-func GetBookings(ctx context.Context, values url.Values, response *ResponseTasks) (err error) {
+func GetBookings(ctx context.Context, values url.Values, response *ResponseBookings) (err error) {
 	u, err := url.Parse(os.Getenv("WRIKE_BASE_URL") + bookingsPath)
 	if err != nil {
 		return

@@ -31,8 +31,8 @@ const (
 	taskDependenciesPath = "/tasks/%v/dependencies"
 )
 
-func getTaskDependencies(path string) func(ctx context.Context, id string, response ResponseDependence) error {
-	return func(ctx context.Context, id string, response ResponseDependence) error {
+func getTaskDependencies(path string) func(ctx context.Context, id string, response *ResponseDependence) error {
+	return func(ctx context.Context, id string, response *ResponseDependence) error {
 		URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(taskDependenciesPath, id)
 		body, _, err := Request(ctx, "GET", URL, nil, nil)
 		if err != nil {
