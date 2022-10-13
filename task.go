@@ -95,22 +95,30 @@ type Task struct {
 	ID               string        `json:"id"`
 	AccountID        string        `json:"accountId"`
 	Title            string        `json:"title"`
+	Description      string        `json:"description"`
+	BriefDescription string        `json:"briefDescription"`
+	ParentIds        []string      `json:"parentIds"`
+	SuperParentIds   []interface{} `json:"superParentIds"`
+	SharedIds        []string      `json:"sharedIds"`
+	ResponsibleIds   []string      `json:"responsibleIds"`
+	Status           string        `json:"status"`
+	Importance       string        `json:"importance"`
 	CreatedDate      time.Time     `json:"createdDate"`
 	UpdatedDate      time.Time     `json:"updatedDate"`
-	BriefDescription string        `json:"briefDescription"`
-	Description      string        `json:"description"`
-	Color            string        `json:"color"`
-	SharedIds        []string      `json:"sharedIds"`
-	ParentIds        []string      `json:"parentIds"`
-	ChildIds         []interface{} `json:"childIds"`
-	SuperParentIds   []interface{} `json:"superParentIds"`
+	Dates            TaskDate      `json:"dates"`
 	Scope            string        `json:"scope"`
+	AuthorIds        []string      `json:"authorIds"`
+	CustomStatusID   string        `json:"customStatusId"`
 	HasAttachments   bool          `json:"hasAttachments"`
 	Permalink        string        `json:"permalink"`
-	WorkflowID       string        `json:"workflowId"`
+	Priority         string        `json:"priority"`
+	FollowedByMe     bool          `json:"followedByMe"`
+	FollowerIds      []string      `json:"followerIds"`
+	SuperTaskIds     []interface{} `json:"superTaskIds"`
+	SubTaskIds       []string      `json:"subTaskIds"`
+	DependencyIds    []string      `json:"dependencyIds"`
 	Metadata         Metadatas     `json:"metadata"`
-	CustomFields     Fields        `json:"customFields"`
-	Project          Project       `json:"project"`
+	CustomFields     []Fields      `json:"customFields"`
 }
 
 type Project struct {
