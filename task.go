@@ -70,15 +70,30 @@ var GetTask = getTasks(taskPath)
 var GetFolderTasks = getTasks(folderTasksPath)
 var GetSpaceTasks = getTasks(spaceTasksPath)
 
-func FolderCreateTask(ctx context.Context, folderID string, req CreateTaskRQ, resp *ResponseTasks) (err error) {
+func CreateFolderTask(ctx context.Context, folderID string, update TaskUpdate, resp *ResponseTasks) (err error) {
 	urlFormat := os.Getenv("WRIKE_BASE_URL") + folderTaskCreatePath
 	url := fmt.Sprintf(urlFormat, folderID)
-	Data, err := req.ToRequest(url)
+	Data, err := update.ToRequest()
 	if err != nil {
 		return err
 	}
 	buf := bytes.NewBuffer([]byte(Data))
 	body, _, err := Request(ctx, "POST", url, io.NopCloser(buf), nil)
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+	return json.NewDecoder(body).Decode(resp)
+}
+
+func UpdateTask(ctx context.Context, taskID string, update TaskUpdate, resp *ResponseTasks) (err error) {
+	url := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(taskPath, taskID)
+	Data, err := update.ToRequest()
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer([]byte(Data))
+	body, _, err := Request(ctx, "PUT", url, io.NopCloser(buf), nil)
 	if err != nil {
 		return err
 	}
@@ -132,7 +147,7 @@ type Project struct {
 	CompletedDate  string   `json:"completedDate"`
 }
 
-type CreateTaskRQ struct {
+type TaskUpdate struct {
 	Title            string            `json:"title"`
 	Description      *string           `json:"description"`
 	Status           *string           `json:"status"`
@@ -192,7 +207,7 @@ type EffortAllocation struct {
 	fields          Fields
 }
 
-func (t CreateTaskRQ) ToRequest(URL string) (r string, err error) {
+func (t TaskUpdate) ToRequest() (r string, err error) {
 	form := url.Values{}
 	form.Add("title", html.EscapeString(t.Title))
 	if t.Description != nil {
