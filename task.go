@@ -210,9 +210,11 @@ type EffortAllocation struct {
 func (t TaskUpdate) ToRequest() (r string, err error) {
 	form := url.Values{}
 	form.Add("title", html.EscapeString(t.Title))
+
 	if t.Description != nil {
 		form.Add("description", *t.Description)
 	}
+
 	if t.Status != nil {
 		form.Add("status", *t.Status)
 	}

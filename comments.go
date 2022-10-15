@@ -66,8 +66,8 @@ func getComments(path string) func(ctx context.Context, id string, response *Res
 var GetTaskComments = getComments(taskCommentsPath)
 var GetFolderComments = getComments(folderCommentsPath)
 
-func CreateTaskComment(ctx context.Context, id string, text string) (body io.ReadCloser, err error) {
-	u, err := url.Parse(os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(taskCommentsPath, id))
+func CreateTaskComment(ctx context.Context, taskID string, text string, response *ResponseComments) (err error) {
+	URL := os.Getenv("WRIKE_BASE_URL") + fmt.Sprintf(taskCommentsPath, taskID)
 	if err != nil {
 		return
 	}
@@ -75,8 +75,11 @@ func CreateTaskComment(ctx context.Context, id string, text string) (body io.Rea
 	values.Add("plainText", "true")
 	values.Add("text", text)
 	r := io.NopCloser(strings.NewReader(values.Encode()))
-	body, _, err = Request(ctx, "POST", u.String(), r, nil)
-	return body, err
+	body, _, err := Request(ctx, "POST", URL, r, nil)
+	if err != nil {
+		return err
+	}
+	return json.NewDecoder(body).Decode(response)
 }
 
 type ResponseComments struct {
